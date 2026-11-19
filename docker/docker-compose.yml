@@ -1,0 +1,73 @@
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: set4-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: "1234"
+      MYSQL_DATABASE: wordpress
+      MYSQL_USER: wpuser
+      MYSQL_PASSWORD: "1234"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - set4-net
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-p1234"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+
+  wordpress:
+    image: wordpress:latest
+    container_name: set4-wordpress
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      WORDPRESS_DB_HOST: mysql:3306
+      WORDPRESS_DB_USER: wpuser
+      WORDPRESS_DB_PASSWORD: "1234"
+      WORDPRESS_DB_NAME: wordpress
+    ports:
+      - "8081:80"
+    networks:
+      - set4-net
+
+  nagios:
+    image: jasonrivers/nagios:latest
+    container_name: set4-nagios
+    restart: unless-stopped
+    environment:
+      NAGIOSADMIN_USER: nagiosadmin
+      NAGIOSADMIN_PASS: "1234"
+    ports:
+      - "8082:80"
+    volumes:
+      - nagios_data:/opt/nagios
+    networks:
+      - set4-net
+
+  shopping-app:
+    build:
+      context: ../app
+    container_name: set4-shopping-app
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    networks:
+      - set4-net
+    depends_on:
+      - mysql
+
+networks:
+  set4-net:
+    name: set4-net
+    driver: bridge
+
+volumes:
+  mysql_data:
+    name: set4-mysql-data
+  nagios_data:
+    name: set4-nagios-data
