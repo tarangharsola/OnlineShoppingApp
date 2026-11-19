@@ -1,0 +1,38 @@
+services:
+  db:
+    image: mysql:8.0
+    container_name: set4-db
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: wordpress
+      MYSQL_USER: wpuser
+      MYSQL_PASSWORD: CHANGE_ME_DB_PASSWORD
+      MYSQL_ROOT_PASSWORD: CHANGE_ME_ROOT_PASSWORD
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks: [set4-net]
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-pCHANGE_ME_ROOT_PASSWORD"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+  wordpress:
+    image: wordpress:php8.2-apache
+    container_name: set4-wordpress
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      WORDPRESS_DB_HOST: db:3306
+      WORDPRESS_DB_USER: wpuser
+      WORDPRESS_DB_PASSWORD: CHANGE_ME_DB_PASSWORD
+      WORDPRESS_DB_NAME: wordpress
+    ports: ["8081:80"]
+    networks: [set4-net]
+networks:
+  set4-net:
+    name: set4-net
+volumes:
+  mysql_data:
+    name: set4-mysql-data
