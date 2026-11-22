@@ -13,23 +13,22 @@ if command -v minikube >/dev/null 2>&1 && minikube status >/dev/null 2>&1; then
   minikube stop
 fi
 
-mkdir -p app/build
-if [ ! -d app/source/.git ]; then
-  git clone https://github.com/nikithamoturi/OnlineShoppingApp.git app/source
-else
-  git -C app/source pull --ff-only
-fi
-
-cd app/source
-mvn -B clean package
-WAR="$(find target -maxdepth 1 -type f -name '*.war' | head -n 1)"
-if [ -z "$WAR" ]; then
-  echo "Maven build completed but no WAR was found in target/."
+if [ ! -f "$ROOT/pom.xml" ] || [ ! -f "$ROOT/src/main/webapp/index.jsp" ]; then
+  echo "Application source is missing. Ensure you cloned the complete fork."
   exit 2
 fi
-cp "$WAR" "$ROOT/app/ROOT.war"
 
 cd "$ROOT"
+export MAVEN_OPTS="-Xms128m -Xmx768m"
+mvn -B -f "$ROOT/pom.xml" clean package
+
+WAR="$ROOT/target/OnlineShoppingApp.war"
+if [ ! -f "$WAR" ]; then
+  echo "Maven build completed but $WAR was not found."
+  exit 3
+fi
+
+cp "$WAR" "$ROOT/app/ROOT.war"
 docker compose -f docker/docker-compose.yml config
 docker compose -f docker/docker-compose.yml up -d --build
 echo
