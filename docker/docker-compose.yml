@@ -3,6 +3,7 @@ services:
     image: mysql:8.0
     container_name: set4-mysql
     restart: unless-stopped
+    mem_limit: 1536m
     environment:
       MYSQL_ROOT_PASSWORD: "1234"
       MYSQL_DATABASE: wordpress
@@ -22,6 +23,7 @@ services:
     image: wordpress:latest
     container_name: set4-wordpress
     restart: unless-stopped
+    mem_limit: 768m
     depends_on:
       mysql:
         condition: service_healthy
@@ -39,6 +41,7 @@ services:
     image: jasonrivers/nagios:latest
     container_name: set4-nagios
     restart: unless-stopped
+    mem_limit: 768m
     environment:
       NAGIOSADMIN_USER: nagiosadmin
       NAGIOSADMIN_PASS: "1234"
@@ -54,6 +57,7 @@ services:
       context: ../app
     container_name: set4-shopping-app
     restart: unless-stopped
+    mem_limit: 1024m
     ports:
       - "8080:8080"
     networks:
